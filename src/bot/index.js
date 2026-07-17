@@ -6,6 +6,7 @@ import { adminOnly } from '../middlewares/admin.middleware.js';
 import { startCommand } from '../commands/start.command.js';
 import { statsCommand } from '../commands/stats.command.js';
 import { winnerCommand } from '../commands/winner.command.js';
+import { exportCommand } from '../commands/export.command.js';
 import { resetCommand } from '../commands/reset.command.js';
 import { addCommand } from '../commands/add.command.js';
 import { channelsCommand, addChannelCommand, delChannelCommand } from '../commands/channel.command.js';
