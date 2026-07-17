@@ -1,17 +1,16 @@
-import { checkAllSubscriptions } from '../services/subscription.service.js';
-import { registerParticipant } from '../services/participant.service.js';
-import { subscriptionKeyboard } from '../keyboards/index.js';
-import { isContestActive, getContestEndLabel } from '../utils/contest.js';
-import { logger } from '../utils/logger.js';
+import { checkAllSubscriptions } from "../services/subscription.service.js";
+import { registerParticipant } from "../services/participant.service.js";
+import { subscriptionKeyboard } from "../keyboards/index.js";
+import { isContestActive, getContestEndLabel } from "../utils/contest.js";
+import { logger } from "../utils/logger.js";
 
 // ─── Xabar shablonlari ────────────────────────────────────────────────────────
 
 /** Botga kirganida birinchi ko'rinadigan xabar (a'zo bo'lmagan) */
 function welcomeMessage() {
   return (
-    `🌟 <b>Eclipse kanalining konkurs botiga xush kelibsiz!</b>\n\n` +
-    `Konkursda qatnashish uchun avval kanalimizga a'zo bo'lishingiz kerak.\n\n` +
-    `👇 Quyidagi tugmani bosib kanalga o'ting, so'ng <b>Tekshirish</b> tugmasini bosing.`
+    `🌟 <b>Konkursimizning botiga xush kelibsiz!</b>\n\n` +
+    `Konkursda ishtirok etish uchun quyidagi kanallarga a'zo bo'ling, so'ng <b>Tekshirish</b> tugmasini bosing.`
   );
 }
 
@@ -22,7 +21,7 @@ function newParticipantMessage(firstName, ticketNumber) {
     `Siz konkurs qatnashchisiga aylandingiz!\n\n` +
     `🎟 Sizning raqamingiz:\n\n` +
     `<code>╔══════════════╗\n` +
-    `║   № ${String(ticketNumber).padStart(3, ' ')}        ║\n` +
+    `║   № ${String(ticketNumber).padStart(3, " ")}        ║\n` +
     `╚══════════════╝</code>\n\n` +
     `🗓 Konkurs <b>${getContestEndLabel()}</b> da tugaydi.\n\n` +
     `Omad tilaymiz!`
@@ -35,7 +34,7 @@ function alreadyRegisteredMessage(ticketNumber) {
     `✅ <b>Siz allaqachon konkurs ishtirokchisisiz!</b>\n\n` +
     `🎟 Sizning raqamingiz:\n\n` +
     `<code>╔══════════════╗\n` +
-    `║   № ${String(ticketNumber).padStart(3, ' ')}        ║\n` +
+    `║   № ${String(ticketNumber).padStart(3, " ")}        ║\n` +
     `╚══════════════╝</code>\n\n` +
     `🗓 Konkurs <b>${getContestEndLabel()}</b> da tugaydi.\n\n` +
     `Omad tilaymiz!`
@@ -57,23 +56,29 @@ function alreadyRegisteredMessage(ticketNumber) {
  */
 export async function startCommand(ctx) {
   const { id: userId, username, first_name: firstName } = ctx.from;
-  logger.info({ userId, username }, '/start buyrug\'i keldi');
+  logger.info({ userId, username }, "/start buyrug'i keldi");
 
   // 1. Konkurs vaqti tugaganmi?
   if (!isContestActive()) {
     await ctx.replyWithHTML(
       `⏰ <b>Konkurs o'z nihoyasiga yetdi.</b>\n\n` +
-      `Konkurs <b>${getContestEndLabel()}</b> da yakunlandi.\n` +
-      `Keyingi konkurslarda ko'rishguncha! 👋`
+        `Konkurs <b>${getContestEndLabel()}</b> da yakunlandi.\n` +
+        `Keyingi konkurslarda ko'rishguncha! 👋`,
     );
     return;
   }
 
   // 2. Kanalga a'zoligini tekshirish
-  const resultObj = await checkAllSubscriptions({ telegram: ctx.telegram }, userId);
+  const resultObj = await checkAllSubscriptions(
+    { telegram: ctx.telegram },
+    userId,
+  );
 
   if (!resultObj.isSubscribed) {
-    await ctx.replyWithHTML(welcomeMessage(), subscriptionKeyboard(resultObj.channels));
+    await ctx.replyWithHTML(
+      welcomeMessage(),
+      subscriptionKeyboard(resultObj.channels),
+    );
     return;
   }
 
@@ -99,10 +104,10 @@ export async function handleSubscribedUser(ctx, userData) {
   }
 
   await ctx.replyWithHTML(
-    newParticipantMessage(userData.firstName, participant.ticketNumber)
+    newParticipantMessage(userData.firstName, participant.ticketNumber),
   );
   logger.info(
     { userId: userData.userId, ticketNumber: participant.ticketNumber },
-    'Yangi ishtirokchi ro\'yxatga olindi'
+    "Yangi ishtirokchi ro'yxatga olindi",
   );
 }
