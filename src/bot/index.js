@@ -2,7 +2,7 @@ import { Telegraf } from 'telegraf';
 import { config } from '../config/index.js';
 import { loggingMiddleware } from '../middlewares/logging.middleware.js';
 import { errorHandler } from '../middlewares/error.middleware.js';
-import { adminOnly } from '../middlewares/admin.middleware.js';
+import { adminOnly, superAdminOnly } from '../middlewares/admin.middleware.js';
 import { startCommand } from '../commands/start.command.js';
 import { statsCommand } from '../commands/stats.command.js';
 import { winnerCommand } from '../commands/winner.command.js';
@@ -32,9 +32,9 @@ export function createBot() {
   bot.command('export', adminOnly, exportCommand);
   bot.command('reset',  adminOnly, resetCommand);
   bot.command('add',    adminOnly, addCommand);
-  bot.command('channels',    adminOnly, channelsCommand);
-  bot.command('add_channel', adminOnly, addChannelCommand);
-  bot.command('del_channel', adminOnly, delChannelCommand);
+  bot.command('channels',    superAdminOnly, channelsCommand);
+  bot.command('add_channel', superAdminOnly, addChannelCommand);
+  bot.command('del_channel', superAdminOnly, delChannelCommand);
 
   // ── Inline tugma callbacklari ─────────────────────────────────────────────
   registerActions(bot);
@@ -58,23 +58,29 @@ export async function setBotCommands(bot) {
     { command: 'start', description: '🎟 Konkursda qatnashish' },
   ]);
 
-  // Adminlar uchun to'liq menu
   const adminCommands = [
     { command: 'start', description: '🎟 Konkursda qatnashish' },
     { command: 'stats', description: '📊 Statistika' },
     { command: 'add', description: '➕ Qo\'lda ishtirokchi qo\'shish' },
     { command: 'winner', description: '🏆 G\'olibni aniqlash' },
     { command: 'export', description: '📄 CSV yuklab olish' },
-    { command: 'channels', description: '📢 Kanallar ro\'yxati' },
-    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
-    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
     { command: 'reset', description: '⚠️ Barcha ma\'lumotlarni tozalash' },
   ];
 
+  const superAdminCommands = [
+    ...adminCommands,
+    { command: 'channels', description: '📢 Kanallar ro\'yxati' },
+    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
+    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
+  ];
+
+  const allAdmins = new Set([...config.ADMIN_IDS, config.SUPER_ADMIN]);
+
   // Har bir adminga shaxsiy scope orqali menyuni o'rnatamiz
-  for (const adminId of config.ADMIN_IDS) {
+  for (const adminId of allAdmins) {
     try {
-      await bot.telegram.setMyCommands(adminCommands, {
+      const commandsToSet = String(adminId) === config.SUPER_ADMIN ? superAdminCommands : adminCommands;
+      await bot.telegram.setMyCommands(commandsToSet, {
         scope: { type: 'chat', chat_id: Number(adminId) },
       });
     } catch (err) {

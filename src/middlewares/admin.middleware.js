@@ -6,9 +6,19 @@ import { config } from '../config/index.js';
  * leaking that an admin command exists.
  */
 export async function adminOnly(ctx, next) {
-  const userId = ctx.from?.id?.toString();
-  if (!userId || !config.ADMIN_IDS.includes(userId)) {
-    return; // silently ignore
+  const userId = String(ctx.from?.id);
+  if (!config.ADMIN_IDS.includes(userId)) {
+    logger.warn({ userId }, 'Unauthorized access attempt');
+    return;
+  }
+  return next();
+}
+
+export async function superAdminOnly(ctx, next) {
+  const userId = String(ctx.from?.id);
+  if (userId !== config.SUPER_ADMIN) {
+    logger.warn({ userId }, 'Unauthorized access attempt to super admin command');
+    return;
   }
   return next();
 }

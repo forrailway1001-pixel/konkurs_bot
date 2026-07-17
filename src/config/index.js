@@ -4,12 +4,13 @@ import 'dotenv/config';
 const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, 'BOT_TOKEN is required'),
   MONGODB_URI: z.string().url('MONGODB_URI must be a valid URI'),
-  CHANNEL_ID: z.string().min(1, 'CHANNEL_ID is required'),
+  CHANNEL_ID: z.string().min(1).optional(),
   ADMIN_IDS: z
     .string()
     .min(1, 'ADMIN_IDS is required')
     .transform((val) => val.split(',').map((id) => id.trim())),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  SUPER_ADMIN: z.string().min(1),
+  NODE_ENV: z.enum(['development', 'production']).default('development'),
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])
     .default('info'),
