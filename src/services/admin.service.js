@@ -3,7 +3,7 @@ import { config } from '../config/index.js';
 
 /**
  * Foydalanuvchi admin ekanligini tekshiradi.
- * .env ADMIN_IDS + DB dagi adminlar + SUPER_ADMIN — hammasi admin hisoblanadi.
+ * Admin = SUPER_ADMIN | DB dagi dinamik adminlar.
  * @param {string|number} userId
  * @returns {Promise<boolean>}
  */
@@ -12,9 +12,6 @@ export async function isAdmin(userId) {
 
   // SUPER_ADMIN doim admin
   if (strId === config.SUPER_ADMIN) return true;
-
-  // .env dagi statik adminlar
-  if (config.ADMIN_IDS.includes(strId)) return true;
 
   // DB dagi dinamik adminlar
   const found = await Admin.findOne({ userId: strId });
@@ -39,7 +36,6 @@ export async function getAllDynamicAdmins() {
 export async function addAdmin(userId, addedBy, note = null) {
   const strId = String(userId);
 
-  // SUPER_ADMIN o'zini qo'sha olmaydi
   if (strId === config.SUPER_ADMIN) {
     return { success: false, message: 'Bu foydalanuvchi allaqachon SUPER ADMIN.' };
   }
@@ -61,14 +57,13 @@ export async function addAdmin(userId, addedBy, note = null) {
 export async function removeAdmin(userId) {
   const strId = String(userId);
 
-  // .env dagi statik adminlarni o'chirib bo'lmaydi
-  if (config.ADMIN_IDS.includes(strId)) {
-    return { success: false, message: 'Bu admin .env faylida statik belgilangan, o\'chirish mumkin emas.' };
+  if (strId === config.SUPER_ADMIN) {
+    return { success: false, message: 'SUPER ADMIN o\'chirilmaydi.' };
   }
 
   const result = await Admin.deleteOne({ userId: strId });
   if (result.deletedCount === 0) {
-    return { success: false, message: 'Bu foydalanuvchi dinamik adminlar ro\'yxatida topilmadi.' };
+    return { success: false, message: 'Bu foydalanuvchi adminlar ro\'yxatida topilmadi.' };
   }
   return { success: true };
 }

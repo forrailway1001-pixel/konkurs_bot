@@ -6,19 +6,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().url('MONGODB_URI must be a valid URI'),
   CHANNEL_ID:  z.string().min(1).optional(),
 
-  // ADMIN_IDS endi ixtiyoriy — bo'sh qolishi mumkin.
-  // Adminlar faqat DB orqali boshqariladi (SUPER_ADMIN qo'shadi/o'chiradi).
-  ADMIN_IDS: z
-    .string()
-    .optional()
-    .default('')
-    .transform((val) =>
-      val
-        ? val.split(',').map((id) => id.trim()).filter(Boolean)
-        : []
-    ),
-
-  // SUPER_ADMIN — yagona statik ma'mur, hech qachon o'zgarmas.
+  // Faqat SUPER_ADMIN statik — barcha boshqa adminlar DB orqali boshqariladi.
   SUPER_ADMIN: z.string().min(1, 'SUPER_ADMIN is required'),
 
   NODE_ENV: z.enum(['development', 'production']).default('development'),

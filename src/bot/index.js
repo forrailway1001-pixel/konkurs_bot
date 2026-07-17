@@ -94,18 +94,6 @@ export async function setBotCommands(bot) {
     logger.warn({ err }, 'SUPER ADMIN uchun buyruqlarni o\'rnatib bo\'lmadi');
   }
 
-  // .env ADMIN_IDS
-  for (const adminId of config.ADMIN_IDS) {
-    if (adminId === config.SUPER_ADMIN) continue;
-    try {
-      await bot.telegram.setMyCommands(adminCommands, {
-        scope: { type: 'chat', chat_id: Number(adminId) },
-      });
-    } catch (err) {
-      logger.warn({ adminId, err }, 'Admin uchun buyruqlarni o\'rnatib bo\'lmadi');
-    }
-  }
-
   // DB dagi dinamik adminlar
   try {
     const dynamicAdmins = await getAllDynamicAdmins();

@@ -8,7 +8,6 @@ import { logger } from '../utils/logger.js';
 
 /**
  * /admins — Barcha adminlar ro'yxatini ko'rsatadi (faqat SUPER ADMIN).
- * Ro'yxat: SUPER_ADMIN + .env ADMIN_IDS + DB dagi dinamik adminlar.
  * @param {import('telegraf').Context} ctx
  */
 export async function adminsCommand(ctx) {
@@ -22,25 +21,16 @@ export async function adminsCommand(ctx) {
   msg += `🔴 <b>SUPER ADMIN (statik):</b>\n`;
   msg += `• <code>${config.SUPER_ADMIN}</code>\n\n`;
 
-  // .env ADMIN_IDS (agar bo'lsa)
-  if (config.ADMIN_IDS.length > 0) {
-    msg += `🟡 <b>.env adminlari (statik):</b>\n`;
-    config.ADMIN_IDS.forEach((id) => {
-      msg += `• <code>${id}</code>\n`;
-    });
-    msg += `\n`;
-  }
-
-  // DB adminlari
+  // DB dinamik adminlar
   if (dynamicAdmins.length > 0) {
-    msg += `🟢 <b>Dinamik adminlar (DB):</b>\n`;
+    msg += `🟢 <b>Adminlar (${dynamicAdmins.length} ta):</b>\n`;
     dynamicAdmins.forEach((a, i) => {
       const date = new Date(a.createdAt).toLocaleDateString('uz-UZ');
       const note = a.note ? ` — ${a.note}` : '';
       msg += `${i + 1}. <code>${a.userId}</code>${note} <i>(${date})</i>\n`;
     });
   } else {
-    msg += `🟢 <b>Dinamik adminlar (DB):</b> yo'q\n`;
+    msg += `🟢 <b>Adminlar:</b> hozircha yo'q\n`;
   }
 
   msg += `\n📌 <b>Buyruqlar:</b>\n`;
@@ -84,8 +74,7 @@ export async function addAdminCommand(ctx) {
     `✅ <b>Admin qo'shildi!</b>\n\n` +
     `👤 ID: <code>${userId}</code>\n` +
     (note ? `📝 Izoh: ${note}\n` : '') +
-    `\nAdmin endi bot buyruqlaridan foydalana oladi.\n` +
-    `⚠️ Admin bot menyusini ko'rishi uchun /start bosishi kerak.`
+    `\n⚠️ Admin bot menyusini ko'rishi uchun /start bosishi kerak.`
   );
 }
 
@@ -109,10 +98,6 @@ export async function delAdminCommand(ctx) {
 
   if (!/^\d+$/.test(userId)) {
     return ctx.reply(`⚠️ USER_ID faqat raqamlardan iborat bo'lishi kerak.`);
-  }
-
-  if (userId === config.SUPER_ADMIN) {
-    return ctx.replyWithHTML(`⚠️ <b>SUPER ADMIN</b> o'chirilmaydi.`);
   }
 
   const res = await removeAdmin(userId);
