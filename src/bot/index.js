@@ -9,8 +9,11 @@ import { winnerCommand } from '../commands/winner.command.js';
 import { exportCommand } from '../commands/export.command.js';
 import { resetCommand } from '../commands/reset.command.js';
 import { addCommand } from '../commands/add.command.js';
+import { endDateCommand } from '../commands/end-date.command.js';
 import { channelsCommand, addChannelCommand, delChannelCommand } from '../commands/channel.command.js';
+import { adminsCommand, addAdminCommand, delAdminCommand } from '../commands/admins.command.js';
 import { registerActions } from '../actions/index.js';
+import { getAllDynamicAdmins } from '../services/admin.service.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -27,11 +30,17 @@ export function createBot() {
   bot.start(startCommand);
 
   // ── Admin buyruqlari ──────────────────────────────────────────────────────
-  bot.command('stats',  adminOnly, statsCommand);
-  bot.command('winner', adminOnly, winnerCommand);
-  bot.command('export', adminOnly, exportCommand);
-  bot.command('reset',  adminOnly, resetCommand);
-  bot.command('add',    adminOnly, addCommand);
+  bot.command('stats',    adminOnly, statsCommand);
+  bot.command('winner',   adminOnly, winnerCommand);
+  bot.command('export',   adminOnly, exportCommand);
+  bot.command('reset',    adminOnly, resetCommand);
+  bot.command('add',      adminOnly, addCommand);
+  bot.command('end_date', adminOnly, endDateCommand);
+
+  // ── SUPER ADMIN buyruqlari ────────────────────────────────────────────────
+  bot.command('admins',      superAdminOnly, adminsCommand);
+  bot.command('add_admin',   superAdminOnly, addAdminCommand);
+  bot.command('del_admin',   superAdminOnly, delAdminCommand);
   bot.command('channels',    superAdminOnly, channelsCommand);
   bot.command('add_channel', superAdminOnly, addChannelCommand);
   bot.command('del_channel', superAdminOnly, delChannelCommand);
@@ -48,8 +57,6 @@ export function createBot() {
 
 /**
  * BotFather'da ko'rinadigan buyruqlar ro'yxatini o'rnatadi.
- * Faqat oddiy foydalanuvchi ko'radigan buyruqlar ko'rsatiladi.
- * Admin buyruqlari maxfiy qoladi.
  * @param {import('telegraf').Telegraf} bot
  */
 export async function setBotCommands(bot) {
@@ -59,34 +66,62 @@ export async function setBotCommands(bot) {
   ]);
 
   const adminCommands = [
-    { command: 'start', description: '🎟 Konkursda qatnashish' },
-    { command: 'stats', description: '📊 Statistika' },
-    { command: 'add', description: '➕ Qo\'lda ishtirokchi qo\'shish' },
-    { command: 'winner', description: '🏆 G\'olibni aniqlash' },
-    { command: 'export', description: '📄 CSV yuklab olish' },
-    { command: 'reset', description: '⚠️ Barcha ma\'lumotlarni tozalash' },
+    { command: 'start',    description: '🎟 Konkursda qatnashish' },
+    { command: 'stats',    description: '📊 Statistika' },
+    { command: 'add',      description: '➕ Qo\'lda ishtirokchi qo\'shish' },
+    { command: 'end_date', description: '📅 Konkurs tugash sanasini belgilash' },
+    { command: 'winner',   description: '🏆 G\'olibni aniqlash' },
+    { command: 'export',   description: '📄 CSV yuklab olish' },
+    { command: 'reset',    description: '⚠️ Barcha ma\'lumotlarni tozalash' },
   ];
 
   const superAdminCommands = [
     ...adminCommands,
-    { command: 'channels', description: '📢 Kanallar ro\'yxati' },
+    { command: 'admins',      description: '👥 Adminlar ro\'yxati' },
+    { command: 'add_admin',   description: '➕ Admin qo\'shish' },
+    { command: 'del_admin',   description: '➖ Admin o\'chirish' },
+    { command: 'channels',    description: '📢 Kanallar ro\'yxati' },
     { command: 'add_channel', description: '➕ Kanal qo\'shish' },
     { command: 'del_channel', description: '➖ Kanal o\'chirish' },
   ];
 
-  const allAdmins = new Set([...config.ADMIN_IDS, config.SUPER_ADMIN]);
+  // SUPER ADMIN
+  try {
+    await bot.telegram.setMyCommands(superAdminCommands, {
+      scope: { type: 'chat', chat_id: Number(config.SUPER_ADMIN) },
+    });
+  } catch (err) {
+    logger.warn({ err }, 'SUPER ADMIN uchun buyruqlarni o\'rnatib bo\'lmadi');
+  }
 
-  // Har bir adminga shaxsiy scope orqali menyuni o'rnatamiz
-  for (const adminId of allAdmins) {
+  // .env ADMIN_IDS
+  for (const adminId of config.ADMIN_IDS) {
+    if (adminId === config.SUPER_ADMIN) continue;
     try {
-      const commandsToSet = String(adminId) === config.SUPER_ADMIN ? superAdminCommands : adminCommands;
-      await bot.telegram.setMyCommands(commandsToSet, {
+      await bot.telegram.setMyCommands(adminCommands, {
         scope: { type: 'chat', chat_id: Number(adminId) },
       });
     } catch (err) {
-      logger.warn({ adminId, err }, 'Admin uchun buyruqlarni o\'rnatib bo\'lmadi. (Admin botga hali start bosmagan bo\'lishi mumkin)');
+      logger.warn({ adminId, err }, 'Admin uchun buyruqlarni o\'rnatib bo\'lmadi');
     }
   }
 
-  logger.info('Bot buyruqlar ro\'yxati o\'rnatildi (Admin scopes bilan)');
+  // DB dagi dinamik adminlar
+  try {
+    const dynamicAdmins = await getAllDynamicAdmins();
+    for (const admin of dynamicAdmins) {
+      if (admin.userId === config.SUPER_ADMIN) continue;
+      try {
+        await bot.telegram.setMyCommands(adminCommands, {
+          scope: { type: 'chat', chat_id: Number(admin.userId) },
+        });
+      } catch (err) {
+        logger.warn({ adminId: admin.userId, err }, 'Dinamik admin uchun buyruqlarni o\'rnatib bo\'lmadi');
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Dinamik adminlar ro\'yxatini DB dan olib bo\'lmadi');
+  }
+
+  logger.info('Bot buyruqlar ro\'yxati o\'rnatildi');
 }

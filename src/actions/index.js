@@ -4,7 +4,8 @@ import { handleSubscribedUser } from '../commands/start.command.js';
 import { subscriptionKeyboard } from '../keyboards/index.js';
 import { resetAllParticipants } from '../services/participant.service.js';
 import { adminOnly } from '../middlewares/admin.middleware.js';
-import { isContestActive, getContestEndLabel } from '../utils/contest.js';
+import { isAdmin } from '../services/admin.service.js';
+import { isContestActiveAsync, getContestEndLabelAsync } from '../utils/contest.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -18,18 +19,22 @@ export function registerActions(bot) {
 
     const { id: userId, username, first_name: firstName } = ctx.from;
 
-    // Konkurs tugaganmi?
+    // Admin ekanligini tekshirish
     const strUserId = String(userId);
-    if (config.ADMIN_IDS.includes(strUserId) || strUserId === config.SUPER_ADMIN) {
+    const adminCheck = await isAdmin(strUserId);
+    if (adminCheck) {
       await ctx.editMessageText(
         `👋 Siz adminsiz, botdan foydalanish uchun /start bosing.`
       );
       return;
     }
 
-    if (!isContestActive()) {
+    // Konkurs tugaganmi?
+    const active = await isContestActiveAsync();
+    if (!active) {
+      const label = await getContestEndLabelAsync();
       await ctx.editMessageText(
-        `⏰ <b>Konkurs o'z nihoyasiga yetdi.</b>\n\nKonkurs <b>${getContestEndLabel()}</b> da yakunlandi.`,
+        `⏰ <b>Konkurs o'z nihoyasiga yetdi.</b>\n\nKonkurs <b>${label}</b> da yakunlandi.`,
         { parse_mode: 'HTML' }
       );
       return;

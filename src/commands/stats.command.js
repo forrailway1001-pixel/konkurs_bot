@@ -1,5 +1,5 @@
 import { getContestStats, getAllParticipants } from '../services/participant.service.js';
-import { isContestActive, getContestEndLabel } from '../utils/contest.js';
+import { isContestActiveAsync, getContestEndLabelAsync } from '../utils/contest.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -10,12 +10,15 @@ export async function statsCommand(ctx) {
   logger.info({ adminId: ctx.from?.id }, '/stats buyrug\'i keldi');
 
   const { total } = await getContestStats();
-  const holat = isContestActive()
-    ? `🟢 Faol (${getContestEndLabel()} gacha)`
+  const active = await isContestActiveAsync();
+  const label  = await getContestEndLabelAsync();
+
+  const holat = active
+    ? `🟢 Faol (${label} gacha)`
     : `🔴 Yakunlangan`;
 
   const participants = await getAllParticipants();
-  
+
   // Ishtirokchilar ro'yxatini shakllantirish
   let listStr = '';
   if (participants.length > 0) {
@@ -34,7 +37,6 @@ export async function statsCommand(ctx) {
     listStr;
 
   // Telegram bitta xabarda 4096 belgi qabul qiladi.
-  // Shuning uchun matn uzun bo'lsa uni qismlarga bo'lib jo'natamiz.
   const MAX_LENGTH = 4000;
   for (let i = 0; i < message.length; i += MAX_LENGTH) {
     await ctx.replyWithHTML(message.substring(i, i + MAX_LENGTH));

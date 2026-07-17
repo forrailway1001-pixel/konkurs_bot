@@ -1,23 +1,30 @@
 import { config } from '../config/index.js';
+import { isAdmin } from '../services/admin.service.js';
+import { logger } from '../utils/logger.js';
 
 /**
- * Middleware that allows only users whose ID is in ADMIN_IDS.
- * Silently ignores unauthorised requests (no error reply) to avoid
- * leaking that an admin command exists.
+ * Faqat adminlarga ruxsat beradi.
+ * Adminlar = SUPER_ADMIN + .env ADMIN_IDS + DB dagi dinamik adminlar.
  */
 export async function adminOnly(ctx, next) {
-  const userId = String(ctx.from?.id);
-  if (!config.ADMIN_IDS.includes(userId)) {
-    logger.warn({ userId }, 'Unauthorized access attempt');
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  const ok = await isAdmin(userId);
+  if (!ok) {
+    logger.warn({ userId }, 'Unauthorized admin access attempt');
     return;
   }
   return next();
 }
 
+/**
+ * Faqat SUPER_ADMIN ga ruxsat beradi.
+ */
 export async function superAdminOnly(ctx, next) {
   const userId = String(ctx.from?.id);
   if (userId !== config.SUPER_ADMIN) {
-    logger.warn({ userId }, 'Unauthorized access attempt to super admin command');
+    logger.warn({ userId }, 'Unauthorized super-admin access attempt');
     return;
   }
   return next();
