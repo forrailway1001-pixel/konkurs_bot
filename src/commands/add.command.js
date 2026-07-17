@@ -32,7 +32,23 @@ export async function addCommand(ctx) {
 
   try {
     // Kanal orqali ishtirokchi ma'lumotlarini (ismi va hokazo) o'qib olish
-    const member = await ctx.telegram.getChatMember(config.CHANNEL_ID, targetUserId);
+    const { getAllChannels } = await import('../services/channel.service.js');
+    const channels = await getAllChannels();
+    let member = null;
+    
+    // Foydalanuvchini istalgan bir kanaldan izlab ko'ramiz
+    for (const ch of channels) {
+      try {
+        member = await ctx.telegram.getChatMember(ch.channelId, targetUserId);
+        if (member) break;
+      } catch (e) {
+        // Bu kanaldan topilmadi, keyingisiga o'tamiz
+      }
+    }
+
+    if (!member) {
+      throw new Error('User not found in any channel');
+    }
     
     const userData = {
       userId: member.user.id,
