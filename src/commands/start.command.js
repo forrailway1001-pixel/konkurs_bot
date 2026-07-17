@@ -1,3 +1,4 @@
+import { config } from '../config/index.js';
 import { checkAllSubscriptions } from "../services/subscription.service.js";
 import { registerParticipant } from "../services/participant.service.js";
 import { subscriptionKeyboard } from "../keyboards/index.js";
@@ -57,6 +58,17 @@ function alreadyRegisteredMessage(ticketNumber) {
 export async function startCommand(ctx) {
   const { id: userId, username, first_name: firstName } = ctx.from;
   logger.info({ userId, username }, "/start buyrug'i keldi");
+
+  // Admin ekanligini tekshirish (Adminlar ro'yxatdan o'tmaydi)
+  const strUserId = String(userId);
+  if (config.ADMIN_IDS.includes(strUserId) || strUserId === config.SUPER_ADMIN) {
+    await ctx.replyWithHTML(
+      `👋 <b>Xush kelibsiz, Admin (${firstName})!</b>\n\n` +
+      `Siz bot administratori bo'lganingiz uchun konkursda ishtirokchi sifatida ro'yxatga olinmaysiz va majburiy obuna talab qilinmaydi.\n\n` +
+      `Botni boshqarish uchun pastki chap burchakdagi <b>Menu</b> tugmasidan foydalaning.`
+    );
+    return;
+  }
 
   // 1. Konkurs vaqti tugaganmi?
   if (!isContestActive()) {
