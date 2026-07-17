@@ -1,4 +1,4 @@
-import { isUserSubscribed } from '../services/subscription.service.js';
+import { checkAllSubscriptions } from '../services/subscription.service.js';
 import { registerParticipant } from '../services/participant.service.js';
 import { subscriptionKeyboard } from '../keyboards/index.js';
 import { isContestActive, getContestEndLabel } from '../utils/contest.js';
@@ -70,10 +70,10 @@ export async function startCommand(ctx) {
   }
 
   // 2. Kanalga a'zoligini tekshirish
-  const subscribed = await isUserSubscribed({ telegram: ctx.telegram }, userId);
+  const resultObj = await checkAllSubscriptions({ telegram: ctx.telegram }, userId);
 
-  if (!subscribed) {
-    await ctx.replyWithHTML(welcomeMessage(), subscriptionKeyboard());
+  if (!resultObj.isSubscribed) {
+    await ctx.replyWithHTML(welcomeMessage(), subscriptionKeyboard(resultObj.channels));
     return;
   }
 

@@ -6,9 +6,9 @@ import { adminOnly } from '../middlewares/admin.middleware.js';
 import { startCommand } from '../commands/start.command.js';
 import { statsCommand } from '../commands/stats.command.js';
 import { winnerCommand } from '../commands/winner.command.js';
-import { exportCommand } from '../commands/export.command.js';
 import { resetCommand } from '../commands/reset.command.js';
 import { addCommand } from '../commands/add.command.js';
+import { channelsCommand, addChannelCommand, delChannelCommand } from '../commands/channel.command.js';
 import { registerActions } from '../actions/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -31,6 +31,9 @@ export function createBot() {
   bot.command('export', adminOnly, exportCommand);
   bot.command('reset',  adminOnly, resetCommand);
   bot.command('add',    adminOnly, addCommand);
+  bot.command('channels',    adminOnly, channelsCommand);
+  bot.command('add_channel', adminOnly, addChannelCommand);
+  bot.command('del_channel', adminOnly, delChannelCommand);
 
   // ── Inline tugma callbacklari ─────────────────────────────────────────────
   registerActions(bot);
@@ -61,6 +64,9 @@ export async function setBotCommands(bot) {
     { command: 'add', description: '➕ Qo\'lda ishtirokchi qo\'shish' },
     { command: 'winner', description: '🏆 G\'olibni aniqlash' },
     { command: 'export', description: '📄 CSV yuklab olish' },
+    { command: 'channels', description: '📢 Kanallar ro\'yxati' },
+    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
+    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
     { command: 'reset', description: '⚠️ Barcha ma\'lumotlarni tozalash' },
   ];
 

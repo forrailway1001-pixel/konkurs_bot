@@ -1,25 +1,28 @@
 import { Markup } from 'telegraf';
-import { config } from '../config/index.js';
 
 /**
  * Kanal havolasini hosil qiladi.
  */
-function channelUrl() {
-  return config.CHANNEL_ID.startsWith('@')
-    ? `https://t.me/${config.CHANNEL_ID.slice(1)}`
-    : `https://t.me/c/${config.CHANNEL_ID}`;
+function channelUrl(channelId) {
+  return channelId.startsWith('@')
+    ? `https://t.me/${channelId.slice(1)}`
+    : `https://t.me/c/${channelId.replace('-100', '')}`;
 }
 
 /**
  * A'zo bo'lmagan foydalanuvchi uchun klaviatura:
- *   📢 A'zo bo'lish   — kanalga o'tadi
- *   ✅ Tekshirish     — a'zolikni qayta tekshiradi
+ * Har bir kanal uchun alohida tugma yaratadi.
  */
-export function subscriptionKeyboard() {
-  return Markup.inlineKeyboard([
-    [Markup.button.url("📢 A'zo bo'lish", channelUrl())],
-    [Markup.button.callback('✅ Tekshirish', 'check_subscription')],
-  ]);
+export function subscriptionKeyboard(channels) {
+  const buttons = channels.map((ch, index) => {
+    const title = channels.length > 1 
+      ? `📢 ${index + 1}-kanalga a'zo bo'lish` 
+      : `📢 A'zo bo'lish`;
+    return [Markup.button.url(title, channelUrl(ch.channelId))];
+  });
+
+  buttons.push([Markup.button.callback('✅ Tekshirish', 'check_subscription')]);
+  return Markup.inlineKeyboard(buttons);
 }
 
 /**

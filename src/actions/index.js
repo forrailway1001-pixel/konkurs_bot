@@ -1,4 +1,4 @@
-import { isUserSubscribed } from '../services/subscription.service.js';
+import { checkAllSubscriptions } from '../services/subscription.service.js';
 import { handleSubscribedUser } from '../commands/start.command.js';
 import { subscriptionKeyboard } from '../keyboards/index.js';
 import { resetAllParticipants } from '../services/participant.service.js';
@@ -26,15 +26,15 @@ export function registerActions(bot) {
       return;
     }
 
-    const subscribed = await isUserSubscribed({ telegram: ctx.telegram }, userId);
+    const resultObj = await checkAllSubscriptions({ telegram: ctx.telegram }, userId);
 
-    if (!subscribed) {
+    if (!resultObj.isSubscribed) {
       await ctx.editMessageText(
-        `❌ <b>Siz hali kanalga a'zo bo'lmagansiz.</b>\n\n` +
-        `Avval kanalga a'zo bo'ling, so'ng <b>Tekshirish</b> tugmasini bosing.`,
+        `❌ <b>Siz hali barcha kanallarga a'zo bo'lmagansiz.</b>\n\n` +
+        `Avval quyidagi kanallarga a'zo bo'ling, so'ng <b>Tekshirish</b> tugmasini bosing.`,
         {
           parse_mode: 'HTML',
-          ...subscriptionKeyboard(),
+          ...subscriptionKeyboard(resultObj.channels),
         }
       );
       return;
