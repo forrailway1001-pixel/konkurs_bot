@@ -63,11 +63,15 @@ export async function resolveChannelId(telegram, input) {
     if (chat.username) {
       inviteLink = `https://t.me/${chat.username}`;
     } else {
-      // Yopiq kanal bo'lsa, bot invite link yaratadi (yoki eskini oladi)
+      // Yopiq kanal bo'lsa, "Qo'shilish so'rovi" (Join Request) talab qiluvchi havola yaratamiz
       try {
-        inviteLink = await telegram.exportChatInviteLink(channelId);
+        const invite = await telegram.createChatInviteLink(channelId, {
+          name: 'Konkurs Bot Havolasi',
+          creates_join_request: true,
+        });
+        inviteLink = invite.invite_link;
       } catch (e) {
-        logger.warn({ err: e, channelId }, 'Invite link olishda xatolik');
+        logger.warn({ err: e, channelId }, 'Invite link yaratishda xatolik');
       }
     }
 

@@ -26,6 +26,27 @@ export function createBot() {
   // ── Global middleware ─────────────────────────────────────────────────────
   bot.use(loggingMiddleware);
 
+  // ── Qo'shilish so'rovlarini avtomatik tasdiqlash (Join Requests) ────────
+  bot.on('chat_join_request', async (ctx) => {
+    try {
+      const userId = ctx.chatJoinRequest.from.id;
+      const chatId = ctx.chatJoinRequest.chat.id;
+      const title = ctx.chatJoinRequest.chat.title;
+
+      await ctx.approveChatJoinRequest(userId);
+      logger.info({ userId, chatId }, "Qo'shilish so'rovi avtomatik tasdiqlandi");
+
+      // Foydalanuvchiga tasdiqlanganligi haqida xabar yuborish (ixtiyoriy)
+      await ctx.telegram.sendMessage(
+        userId,
+        `✅ <b>${title}</b> kanaliga so'rovingiz tasdiqlandi!\n\nIltimos, botga qaytib konkursda qatnashish uchun <b>Tekshirish</b> tugmasini bosing yoki /start buyrug'ini yuboring.`,
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+    } catch (err) {
+      logger.error({ err }, "Qo'shilish so'rovini tasdiqlashda xatolik yuz berdi");
+    }
+  });
+
   // ── Bot kanalga admin qilinganda avtomatik ID ni berish ──────────────────
   bot.on('my_chat_member', async (ctx) => {
     try {
