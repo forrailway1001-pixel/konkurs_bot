@@ -1,12 +1,30 @@
 import { Markup } from 'telegraf';
 
 /**
- * Kanal havolasini hosil qiladi.
+ * Saqlangan channelId dan foydalanuvchi bosadigan havola hosil qiladi.
+ *
+ * Qo'llab-quvvatlanadigan formatlar (DB da qanday saqlangan bo'lsa):
+ *   -100xxxxxxxxxx  → https://t.me/c/xxxxxxxxxx   (yopiq / numeric)
+ *   @username       → https://t.me/username
+ *   username        → https://t.me/username        (@ siz saqlangan bo'lsa)
  */
 function channelUrl(channelId) {
-  return channelId.startsWith('@')
-    ? `https://t.me/${channelId.slice(1)}`
-    : `https://t.me/c/${channelId.replace('-100', '')}`;
+  const s = String(channelId).trim();
+
+  // Numeric id: manfiy (masalan -1001234567890) yoki faqat raqam
+  if (/^-?\d+$/.test(s)) {
+    // -100 prefiksini olib tashlaymiz
+    const bare = s.replace(/^-100/, '');
+    return `https://t.me/c/${bare}`;
+  }
+
+  // @username formatida saqlangan
+  if (s.startsWith('@')) {
+    return `https://t.me/${s.slice(1)}`;
+  }
+
+  // @ siz saqlangan username
+  return `https://t.me/${s}`;
 }
 
 /**
