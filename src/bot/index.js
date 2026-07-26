@@ -26,6 +26,32 @@ export function createBot() {
   // ── Global middleware ─────────────────────────────────────────────────────
   bot.use(loggingMiddleware);
 
+  // ── Bot kanalga admin qilinganda avtomatik ID ni berish ──────────────────
+  bot.on('my_chat_member', async (ctx) => {
+    try {
+      const chat = ctx.chat;
+      const newStatus = ctx.myChatMember.new_chat_member.status;
+      
+      // Agar bot kanalga administrator sifatida qo'shilsa
+      if (chat.type === 'channel' && newStatus === 'administrator') {
+        const adminId = ctx.from?.id; // Botni admin qilgan odam
+        const message = 
+          `✅ Meni <b>${chat.title}</b> kanaliga admin qildingiz!\n\n` +
+          `Yopiq kanal bo'lsa ham endi uni osongina qo'sha olasiz. Majburiy obunaga qo'shish uchun quyidagi buyruqni ustiga bosing (nusxalanadi) va menga yuboring:\n\n` +
+          `<code>/add_channel ${chat.id}</code>`;
+
+        if (adminId) {
+          await ctx.telegram.sendMessage(adminId, message, { parse_mode: 'HTML' }).catch(() => {});
+        } else {
+          // Agar kim qo'shganini aniqlab bo'lmasa, SUPER_ADMIN ga xabar yuboramiz
+          await ctx.telegram.sendMessage(config.SUPER_ADMIN, message, { parse_mode: 'HTML' }).catch(() => {});
+        }
+      }
+    } catch (error) {
+      logger.error({ error }, 'my_chat_member xatolik');
+    }
+  });
+
   // ── Foydalanuvchi buyruqlari ──────────────────────────────────────────────
   bot.start(startCommand);
 
