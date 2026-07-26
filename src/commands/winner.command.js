@@ -1,30 +1,37 @@
-import { pickWinner } from '../services/participant.service.js';
+import { pickWinners } from '../services/participant.service.js';
 import { logger } from '../utils/logger.js';
 
 /**
- * /winner — tasodifiy g'olib tanlaydi (faqat admin).
+ * /winner [count] — tasodifiy g'olib(lar)ni tanlaydi (faqat admin).
  * @param {import('telegraf').Context} ctx
  */
 export async function winnerCommand(ctx) {
   logger.info({ adminId: ctx.from?.id }, '/winner buyrug\'i keldi');
 
-  const winner = await pickWinner();
+  const args = ctx.message.text.trim().split(/\s+/).slice(1);
+  let count = 1;
+  if (args.length > 0) {
+    const parsed = parseInt(args[0], 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      count = parsed;
+    }
+  }
 
-  if (!winner) {
+  const winners = await pickWinners(count);
+
+  if (!winners || winners.length === 0) {
     await ctx.replyWithHTML(
       '⚠️ <b>Hozircha ishtirokchilar yo\'q.</b>\n\nKonkursga hech kim ro\'yxatdan o\'tmagan.'
     );
     return;
   }
 
-  const usernameDisplay = winner.username ? `@${winner.username}` : '—';
+  let message = `🏆 <b>${winners.length}ta g'olib aniqlandi!</b>\n\n`;
 
-  const message =
-    `🏆 <b>Konkurs G'olibi</b>\n\n` +
-    `👤 Ismi: <b>${winner.firstName}</b>\n` +
-    `🔗 Username: <b>${usernameDisplay}</b>\n` +
-    `🎟 Raqami: <code>${winner.ticketNumber}</code>\n` +
-    `🆔 Telegram ID: <code>${winner.userId}</code>`;
+  winners.forEach((winner, index) => {
+    const nameLink = `<a href="tg://user?id=${winner.userId}">${winner.firstName}</a>`;
+    message += `${index + 1}-o'rin: ${winner.ticketNumber}-raqamli ishtirokchi! — ${nameLink}\n`;
+  });
 
   await ctx.replyWithHTML(message);
 }

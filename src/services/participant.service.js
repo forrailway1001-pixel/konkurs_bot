@@ -66,15 +66,15 @@ export async function getContestStats() {
 }
 
 /**
- * Picks one random participant from the database to be the winner.
- * @returns {Promise<object | null>}
+ * Picks random participants from the database to be the winners.
+ * @param {number} count Number of winners to pick
+ * @returns {Promise<object[]>}
  */
-export async function pickWinner() {
-  const count = await Participant.countDocuments();
-  if (count === 0) return null;
+export async function pickWinners(count = 1) {
+  const total = await Participant.countDocuments();
+  if (total === 0) return [];
 
-  const randomSkip = Math.floor(Math.random() * count);
-  return Participant.findOne().skip(randomSkip).lean();
+  return Participant.aggregate([{ $sample: { size: count } }]);
 }
 
 /**

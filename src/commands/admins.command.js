@@ -68,13 +68,31 @@ export async function addAdminCommand(ctx) {
     return ctx.replyWithHTML(`⚠️ ${res.message}`);
   }
 
+  const adminCommands = [
+    { command: 'start',    description: '🎟 Konkursda qatnashish' },
+    { command: 'stats',    description: '📊 Statistika' },
+    { command: 'add',      description: '➕ Qo\'lda ishtirokchi qo\'shish' },
+    { command: 'end_date', description: '📅 Konkurs tugash sanasini belgilash' },
+    { command: 'winner',   description: '🏆 G\'olibni aniqlash' },
+    { command: 'export',   description: '📄 CSV yuklab olish' },
+    { command: 'reset',    description: '⚠️ Barcha ma\'lumotlarni tozalash' },
+  ];
+
+  try {
+    await ctx.telegram.setMyCommands(adminCommands, {
+      scope: { type: 'chat', chat_id: Number(userId) },
+    });
+  } catch (err) {
+    logger.warn({ err }, 'Yangi admin uchun buyruqlarni o\'rnatib bo\'lmadi');
+  }
+
   logger.info({ newAdminId: userId, addedBy: ctx.from?.id }, 'Yangi admin qo\'shildi');
 
   await ctx.replyWithHTML(
     `✅ <b>Admin qo'shildi!</b>\n\n` +
     `👤 ID: <code>${userId}</code>\n` +
     (note ? `📝 Izoh: ${note}\n` : '') +
-    `\n⚠️ Admin bot menyusini ko'rishi uchun /start bosishi kerak.`
+    `\n⚠️ Admin bot menyusini ko'rishi uchun botga qaytadan kirishi (/start) yoki Telegramni yangilashi kerak.`
   );
 }
 
@@ -103,6 +121,14 @@ export async function delAdminCommand(ctx) {
   const res = await removeAdmin(userId);
   if (!res.success) {
     return ctx.replyWithHTML(`⚠️ ${res.message}`);
+  }
+
+  try {
+    await ctx.telegram.deleteMyCommands({
+      scope: { type: 'chat', chat_id: Number(userId) },
+    });
+  } catch (err) {
+    logger.warn({ err }, 'O\'chirilgan admin uchun buyruqlarni tozalab bo\'lmadi');
   }
 
   logger.info({ removedAdminId: userId, removedBy: ctx.from?.id }, 'Admin o\'chirildi');
