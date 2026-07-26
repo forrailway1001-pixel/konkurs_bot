@@ -25,45 +25,19 @@ export async function getAllChannels() {
 export async function resolveChannelId(telegram, input) {
   const raw = input.trim();
 
-  // Invite link formatini aniqlash:
-  // https://t.me/+xxx  yoki  https://t.me/joinchat/xxx
+  // Agar to'g'ridan-to'g'ri invite link yuborilsa
   const isInviteLink =
     /^https?:\/\/t\.me\/\+/i.test(raw) ||
-    /^https?:\/\/t\.me\/joinchat/ / i.test(raw);
+    /^https?:\/\/t\.me\/joinchat\//i.test(raw);
 
   if (isInviteLink) {
-    // Yopiq kanal havolalari uchun getChatInviteLinkInfo ishlatiladi
-    try {
-      const info = await telegram.callApi("checkChatInviteLink", {
-        invite_link: raw,
-      });
-      // info.chat mavjud bo'lsa — bot allaqachon a'zo yoki kanal ochiq
-      if (info?.chat?.id) {
-        const id = String(info.chat.id);
-        return { ok: true, channelId: id, title: info.chat.title ?? id };
-      }
-      // info.chat yo'q — bot hali kanalda admin emas, lekin linkdan title olish mumkin
-      if (info?.title) {
-        return {
-          ok: false,
-          error:
-            `"${info.title}" kanali topildi, lekin bot u yerda admin emas.\n` +
-            `Iltimos, botni kanalga admin qilib qo'shing va qayta urinib ko'ring.`,
-        };
-      }
-      return {
-        ok: false,
-        error: "Havola orqali kanal ma'lumotini olishning imkoni bo'lmadi.",
-      };
-    } catch (err) {
-      logger.warn({ err, input: raw }, "checkChatInviteLink xatolik");
-      return {
-        ok: false,
-        error:
-          "Yopiq kanal havolasi orqali kanalga kira olmadim.\n" +
-          "Botni kanalga admin qilib qo'shing va kanal IDsini yoki @usernameini yuboring.",
-      };
-    }
+    return {
+      ok: false,
+      error:
+        'Yopiq kanal havolasini to\'g\'ridan-to\'g\'ri qo\'shib bo\'lmaydi.\n\n' +
+        'Iltimos, kanalning <b>raqamli IDsini</b> yuboring (masalan, <code>-1001234567890</code>).\n\n' +
+        'Kanal IDsini bilish uchun kanaldan istalgan xabarni @JsonDumpBot ga forward qiling va <code>forward_from_chat.id</code> qiymatini oling.',
+    };
   }
 
   // @username  yoki  https://t.me/username  yoki  -100xxx  formatlar
@@ -72,10 +46,10 @@ export async function resolveChannelId(telegram, input) {
   // https://t.me/username → @username
   const publicLinkMatch = raw.match(/^https?:\/\/t\.me\/([A-Za-z0-9_]{5,})$/i);
   if (publicLinkMatch) {
-    target = "@" + publicLinkMatch[1];
+    target = '@' + publicLinkMatch[1];
   }
 
-  // numeric id — to'g'ridan to'g'ri
+  // numeric id — to'g'ridan to'g'ri raqamga o'girish
   if (/^-?\d+$/.test(target)) {
     target = Number(target);
   }
@@ -83,18 +57,28 @@ export async function resolveChannelId(telegram, input) {
   try {
     const chat = await telegram.getChat(target);
     const channelId = String(chat.id);
-    return {
-      ok: true,
-      channelId,
-      title: chat.title ?? chat.username ?? channelId,
-    };
+    
+    // Kanalga kirish havolasini avtomatik olish
+    let inviteLink = null;
+    if (chat.username) {
+      inviteLink = `https://t.me/${chat.username}`;
+    } else {
+      // Yopiq kanal bo'lsa, bot invite link yaratadi (yoki eskini oladi)
+      try {
+        inviteLink = await telegram.exportChatInviteLink(channelId);
+      } catch (e) {
+        logger.warn({ err: e, channelId }, 'Invite link olishda xatolik');
+      }
+    }
+
+    return { ok: true, channelId, title: chat.title ?? chat.username ?? channelId, inviteLink };
   } catch (err) {
-    logger.warn({ err, input: raw }, "getChat xatolik");
+    logger.warn({ err, input: raw }, 'getChat xatolik');
     return {
       ok: false,
       error:
-        "Kanal topilmadi yoki bot u yerda admin emas.\n" +
-        "Botni kanalga admin qilib qo'shing va qayta urinib ko'ring.",
+        'Kanal topilmadi yoki bot u yerda admin emas.\n' +
+        'Botni kanalga admin qilib qo\'shing va qayta urinib ko\'ring.',
     };
   }
 }
@@ -111,7 +95,7 @@ export async function addChannel(telegram, input) {
     return { success: false, message: resolved.error };
   }
 
-  const { channelId, title } = resolved;
+  const { channelId, title, inviteLink } = resolved;
 
   const existing = await Channel.findOne({ channelId });
   if (existing) {
@@ -121,7 +105,7 @@ export async function addChannel(telegram, input) {
     };
   }
 
-  await Channel.create({ channelId });
+  await Channel.create({ channelId, inviteLink });
   return { success: true, channelId, title };
 }
 

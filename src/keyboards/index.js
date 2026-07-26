@@ -1,15 +1,15 @@
 import { Markup } from 'telegraf';
 
 /**
- * Saqlangan channelId dan foydalanuvchi bosadigan havola hosil qiladi.
- *
- * Qo'llab-quvvatlanadigan formatlar (DB da qanday saqlangan bo'lsa):
- *   -100xxxxxxxxxx  → https://t.me/c/xxxxxxxxxx   (yopiq / numeric)
- *   @username       → https://t.me/username
- *   username        → https://t.me/username        (@ siz saqlangan bo'lsa)
+ * Saqlangan kanaldan foydalanuvchi bosadigan havola hosil qiladi.
  */
-function channelUrl(channelId) {
-  const s = String(channelId).trim();
+function channelUrl(ch) {
+  // Agar bazada tayyor havola (inviteLink) saqlangan bo'lsa, o'shani ishlatamiz
+  if (ch.inviteLink) {
+    return ch.inviteLink;
+  }
+
+  const s = String(ch.channelId).trim();
 
   // Numeric id: manfiy (masalan -1001234567890) yoki faqat raqam
   if (/^-?\d+$/.test(s)) {
@@ -36,7 +36,7 @@ export function subscriptionKeyboard(channels) {
     const title = channels.length > 1 
       ? `📢 ${index + 1}-kanalga a'zo bo'lish` 
       : `📢 A'zo bo'lish`;
-    return [Markup.button.url(title, channelUrl(ch.channelId))];
+    return [Markup.button.url(title, channelUrl(ch))];
   });
 
   buttons.push([Markup.button.callback('✅ Tekshirish', 'check_subscription')]);

@@ -8,6 +8,11 @@ const channelSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    inviteLink: {
+      type: String,
+      default: null,
+      trim: true,
+    },
   },
   { timestamps: true, versionKey: false }
 );
