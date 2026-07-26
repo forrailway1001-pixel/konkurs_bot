@@ -14,6 +14,7 @@ import { channelsCommand, addChannelCommand, delChannelCommand } from '../comman
 import { adminsCommand, addAdminCommand, delAdminCommand } from '../commands/admins.command.js';
 import { registerActions } from '../actions/index.js';
 import { getAllDynamicAdmins } from '../services/admin.service.js';
+import { JoinRequest } from '../models/join-request.model.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -26,24 +27,22 @@ export function createBot() {
   // ── Global middleware ─────────────────────────────────────────────────────
   bot.use(loggingMiddleware);
 
-  // ── Qo'shilish so'rovlarini avtomatik tasdiqlash (Join Requests) ────────
+  // ── Qo'shilish so'rovlarini saqlab qo'yish (Join Requests) ───────────────
   bot.on('chat_join_request', async (ctx) => {
     try {
       const userId = ctx.chatJoinRequest.from.id;
-      const chatId = ctx.chatJoinRequest.chat.id;
-      const title = ctx.chatJoinRequest.chat.title;
+      const chatId = String(ctx.chatJoinRequest.chat.id);
 
-      await ctx.approveChatJoinRequest(userId);
-      logger.info({ userId, chatId }, "Qo'shilish so'rovi avtomatik tasdiqlandi");
+      // So'rovni bazaga saqlaymiz, lekin tasdiqlamaymiz
+      await JoinRequest.updateOne(
+        { userId, channelId: chatId },
+        { $setOnInsert: { userId, channelId: chatId } },
+        { upsert: true }
+      );
 
-      // Foydalanuvchiga tasdiqlanganligi haqida xabar yuborish (ixtiyoriy)
-      await ctx.telegram.sendMessage(
-        userId,
-        `✅ <b>${title}</b> kanaliga so'rovingiz tasdiqlandi!\n\nIltimos, botga qaytib konkursda qatnashish uchun <b>Tekshirish</b> tugmasini bosing yoki /start buyrug'ini yuboring.`,
-        { parse_mode: 'HTML' }
-      ).catch(() => {});
+      logger.info({ userId, chatId }, "Qo'shilish so'rovi bazaga saqlandi (kutilmoqda)");
     } catch (err) {
-      logger.error({ err }, "Qo'shilish so'rovini tasdiqlashda xatolik yuz berdi");
+      logger.error({ err }, "Qo'shilish so'rovini saqlashda xatolik yuz berdi");
     }
   });
 

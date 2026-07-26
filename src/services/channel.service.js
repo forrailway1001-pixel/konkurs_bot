@@ -25,33 +25,25 @@ export async function getAllChannels() {
 export async function resolveChannelId(telegram, input) {
   const raw = input.trim();
 
-  // Agar to'g'ridan-to'g'ri invite link yuborilsa
+  // Invite link formatlari
   const isInviteLink =
     /^https?:\/\/t\.me\/\+/i.test(raw) ||
     /^https?:\/\/t\.me\/joinchat\//i.test(raw);
 
-  if (isInviteLink) {
-    return {
-      ok: false,
-      error:
-        'Yopiq kanal havolasini to\'g\'ridan-to\'g\'ri qo\'shib bo\'lmaydi.\n\n' +
-        'Iltimos, kanalning <b>raqamli IDsini</b> yuboring (masalan, <code>-1001234567890</code>).\n\n' +
-        'Kanal IDsini bilish uchun kanaldan istalgan xabarni @JsonDumpBot ga forward qiling va <code>forward_from_chat.id</code> qiymatini oling.',
-    };
-  }
-
   // @username  yoki  https://t.me/username  yoki  -100xxx  formatlar
   let target = raw;
 
-  // https://t.me/username → @username
-  const publicLinkMatch = raw.match(/^https?:\/\/t\.me\/([A-Za-z0-9_]{5,})$/i);
-  if (publicLinkMatch) {
-    target = '@' + publicLinkMatch[1];
-  }
+  if (!isInviteLink) {
+    // https://t.me/username → @username
+    const publicLinkMatch = raw.match(/^https?:\/\/t\.me\/([A-Za-z0-9_]{5,})$/i);
+    if (publicLinkMatch) {
+      target = '@' + publicLinkMatch[1];
+    }
 
-  // numeric id — to'g'ridan to'g'ri raqamga o'girish
-  if (/^-?\d+$/.test(target)) {
-    target = Number(target);
+    // numeric id — to'g'ridan to'g'ri raqamga o'girish
+    if (/^-?\d+$/.test(target)) {
+      target = Number(target);
+    }
   }
 
   try {
@@ -78,6 +70,20 @@ export async function resolveChannelId(telegram, input) {
     return { ok: true, channelId, title: chat.title ?? chat.username ?? channelId, inviteLink };
   } catch (err) {
     logger.warn({ err, input: raw }, 'getChat xatolik');
+
+    if (isInviteLink) {
+      return {
+        ok: false,
+        error:
+          'Yopiq kanal invite havolasi orqali kanal IDsini aniqlash imkoni bo\'lmadi.\n\n' +
+          '📋 <b>Qanday qilish kerak:</b>\n' +
+          '1. Botni kanalga <b>admin</b> qilib qo\'shing\n' +
+          '2. Kanaldan istalgan xabarni <code>@JsonDumpBot</code> ga <b>forward</b> qiling\n' +
+          '3. <code>forward_from_chat.id</code> qiymatini (masalan <code>-1001234567890</code>) olib, shu buyruqni yuboring:\n' +
+          '<code>/add_channel -1001234567890</code>',
+      };
+    }
+
     return {
       ok: false,
       error:

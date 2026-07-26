@@ -32,15 +32,22 @@ export async function addChannelCommand(ctx) {
     );
   }
 
-  const res = await addChannel(ctx.telegram, args[1]);
-  if (!res.success) {
-    return ctx.replyWithHTML(`⚠️ ${res.message}`);
+  try {
+    const res = await addChannel(ctx.telegram, args[1]);
+    if (!res.success) {
+      return ctx.replyWithHTML(`⚠️ ${res.message}`);
+    }
+    await ctx.replyWithHTML(
+      `✅ Kanal qo'shildi!\n\n` +
+      `📢 <b>${res.title}</b>\n` +
+      `🆔 <code>${res.channelId}</code>`
+    );
+  } catch (err) {
+    await ctx.replyWithHTML(
+      `❌ <b>Xatolik yuz berdi:</b> ${err.message}\n\n` +
+      `Iltimos, botni kanalga <b>admin</b> qilib qo'shing va qayta urinib ko'ring.`
+    );
   }
-  await ctx.replyWithHTML(
-    `✅ Kanal qo'shildi!\n\n` +
-    `📢 <b>${res.title}</b>\n` +
-    `🆔 <code>${res.channelId}</code>`
-  );
 }
 
 export async function delChannelCommand(ctx) {
@@ -55,13 +62,20 @@ export async function delChannelCommand(ctx) {
     );
   }
 
-  const res = await removeChannel(ctx.telegram, args[1]);
-  if (!res.success) {
-    return ctx.replyWithHTML(`⚠️ ${res.message}`);
+  try {
+    const res = await removeChannel(ctx.telegram, args[1]);
+    if (!res.success) {
+      return ctx.replyWithHTML(`⚠️ ${res.message}`);
+    }
+    await ctx.replyWithHTML(
+      `✅ Kanal o'chirildi!\n\n` +
+      `📢 <b>${res.title}</b>\n` +
+      `🆔 <code>${res.channelId}</code>`
+    );
+  } catch (err) {
+    await ctx.replyWithHTML(
+      `❌ <b>Xatolik yuz berdi:</b> ${err.message}\n\n` +
+      `Iltimos, qayta urinib ko'ring.`
+    );
   }
-  await ctx.replyWithHTML(
-    `✅ Kanal o'chirildi!\n\n` +
-    `📢 <b>${res.title}</b>\n` +
-    `🆔 <code>${res.channelId}</code>`
-  );
 }
