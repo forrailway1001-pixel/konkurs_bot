@@ -1,19 +1,11 @@
 import { Channel } from "../models/channel.model.js";
-import { config } from "../config/index.js";
 import { logger } from "../utils/logger.js";
 
 /**
  * Barcha kanallarni oladi.
- * Agar baza bo'sh bo'lsa, avtomatik ravishda .env dagi kanalni qaytaradi.
  */
 export async function getAllChannels() {
-  const channels = await Channel.find().lean();
-
-  if (channels.length === 0 && config.CHANNEL_ID) {
-    return [{ channelId: config.CHANNEL_ID }];
-  }
-
-  return channels;
+  return Channel.find().lean();
 }
 
 /**

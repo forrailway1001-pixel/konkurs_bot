@@ -4,7 +4,6 @@ import 'dotenv/config';
 const envSchema = z.object({
   BOT_TOKEN:   z.string().min(1, 'BOT_TOKEN is required'),
   MONGODB_URI: z.string().url('MONGODB_URI must be a valid URI'),
-  CHANNEL_ID:  z.string().min(1).optional(),
 
   // Faqat SUPER_ADMIN statik — barcha boshqa adminlar DB orqali boshqariladi.
   SUPER_ADMIN: z.string().min(1, 'SUPER_ADMIN is required'),
