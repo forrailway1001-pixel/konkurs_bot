@@ -59,6 +59,36 @@ export async function startCommand(ctx) {
   const strUserId = String(userId);
   const adminCheck = await isAdmin(strUserId);
   if (adminCheck) {
+    const adminCommands = [
+      { command: 'start',    description: '🎟 Konkursda qatnashish' },
+      { command: 'stats',    description: '📊 Statistika' },
+      { command: 'add',      description: '➕ Qo\'lda ishtirokchi qo\'shish' },
+      { command: 'end_date', description: '📅 Konkurs tugash sanasini belgilash' },
+      { command: 'winner',   description: '🏆 G\'olibni aniqlash' },
+      { command: 'export',   description: '📄 CSV yuklab olish' },
+      { command: 'reset',    description: '⚠️ Barcha ma\'lumotlarni tozalash' },
+      { command: 'channels',    description: '📢 Kanallar ro\'yxati' },
+      { command: 'add_channel', description: '➕ Kanal qo\'shish' },
+      { command: 'del_channel', description: '➖ Kanal o\'chirish' },
+    ];
+    
+    // Add super admin commands if applicable
+    if (strUserId === config.SUPER_ADMIN) {
+      adminCommands.push(
+        { command: 'admins',      description: '👥 Adminlar ro\'yxati' },
+        { command: 'add_admin',   description: '➕ Admin qo\'shish' },
+        { command: 'del_admin',   description: '➖ Admin o\'chirish' }
+      );
+    }
+    
+    try {
+      await ctx.telegram.setMyCommands(adminCommands, {
+        scope: { type: 'chat', chat_id: userId },
+      });
+    } catch (err) {
+      logger.warn({ err, userId }, 'Admin uchun startda buyruqlarni o\'rnatib bo\'lmadi');
+    }
+
     await ctx.replyWithHTML(
       `👋 <b>Xush kelibsiz, Admin (${firstName})!</b>\n\n` +
       `Siz bot administratori bo'lganingiz uchun konkursda ishtirokchi sifatida ro'yxatga olinmaysiz va majburiy obuna talab qilinmaydi.\n\n` +

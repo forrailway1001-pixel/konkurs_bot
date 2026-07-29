@@ -35,8 +35,8 @@ export function createBot() {
 
       // So'rovni bazaga saqlaymiz, lekin tasdiqlamaymiz
       await JoinRequest.updateOne(
-        { userId, channelId: chatId },
-        { $setOnInsert: { userId, channelId: chatId } },
+        { channelId: chatId },
+        { $addToSet: { userIds: userId } },
         { upsert: true }
       );
 
@@ -87,9 +87,9 @@ export function createBot() {
   bot.command('admins',      superAdminOnly, adminsCommand);
   bot.command('add_admin',   superAdminOnly, addAdminCommand);
   bot.command('del_admin',   superAdminOnly, delAdminCommand);
-  bot.command('channels',    superAdminOnly, channelsCommand);
-  bot.command('add_channel', superAdminOnly, addChannelCommand);
-  bot.command('del_channel', superAdminOnly, delChannelCommand);
+  bot.command('channels',    adminOnly, channelsCommand);
+  bot.command('add_channel', adminOnly, addChannelCommand);
+  bot.command('del_channel', adminOnly, delChannelCommand);
 
   // ── Inline tugma callbacklari ─────────────────────────────────────────────
   registerActions(bot);
@@ -119,6 +119,9 @@ export async function setBotCommands(bot) {
     { command: 'winner',   description: '🏆 G\'olibni aniqlash' },
     { command: 'export',   description: '📄 CSV yuklab olish' },
     { command: 'reset',    description: '⚠️ Barcha ma\'lumotlarni tozalash' },
+    { command: 'channels',    description: '📢 Kanallar ro\'yxati' },
+    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
+    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
   ];
 
   const superAdminCommands = [
@@ -126,9 +129,6 @@ export async function setBotCommands(bot) {
     { command: 'admins',      description: '👥 Adminlar ro\'yxati' },
     { command: 'add_admin',   description: '➕ Admin qo\'shish' },
     { command: 'del_admin',   description: '➖ Admin o\'chirish' },
-    { command: 'channels',    description: '📢 Kanallar ro\'yxati' },
-    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
-    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
   ];
 
   // SUPER ADMIN

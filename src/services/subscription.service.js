@@ -19,7 +19,7 @@ export async function checkAllSubscriptions(bot, userId) {
       
       if (!activeStatuses.includes(member.status)) {
         // Agar a'zo bo'lmasa, so'rov yuborganlar ro'yxatidan tekshiramiz
-        const hasRequested = await JoinRequest.exists({ userId, channelId: ch.channelId });
+        const hasRequested = await JoinRequest.exists({ channelId: ch.channelId, userIds: userId });
         if (!hasRequested) {
           notSubscribedTo.push(ch);
         }
@@ -27,7 +27,7 @@ export async function checkAllSubscriptions(bot, userId) {
     } catch (err) {
       // getChatMember xatolik bersa (masalan, foydalanuvchi kanalga kirmagan bo'lsa),
       // baribir so'rov yuborganlar ro'yxatini tekshiramiz
-      const hasRequested = await JoinRequest.exists({ userId, channelId: ch.channelId });
+      const hasRequested = await JoinRequest.exists({ channelId: ch.channelId, userIds: userId });
       if (!hasRequested) {
         logger.warn({ err: err.message, userId, channelId: ch.channelId }, 'Foydalanuvchi kanalga a\'zo emas va so\'rov ham yubormagan');
         notSubscribedTo.push(ch);

@@ -85,11 +85,14 @@ export async function getAllParticipants() {
   return Participant.find().sort({ ticketNumber: 1 }).lean();
 }
 
+import { JoinRequest } from '../models/join-request.model.js';
+
 /**
- * Deletes all participants. Use with caution — irreversible.
- * @returns {Promise<number>} Number of deleted documents.
+ * Deletes all participants and join requests. Use with caution — irreversible.
+ * @returns {Promise<number>} Number of deleted participants.
  */
 export async function resetAllParticipants() {
+  await JoinRequest.deleteMany({});
   const result = await Participant.deleteMany({});
   return result.deletedCount;
 }

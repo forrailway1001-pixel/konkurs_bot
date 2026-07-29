@@ -76,6 +76,9 @@ export async function addAdminCommand(ctx) {
     { command: 'winner',   description: '🏆 G\'olibni aniqlash' },
     { command: 'export',   description: '📄 CSV yuklab olish' },
     { command: 'reset',    description: '⚠️ Barcha ma\'lumotlarni tozalash' },
+    { command: 'channels',    description: '📢 Kanallar ro\'yxati' },
+    { command: 'add_channel', description: '➕ Kanal qo\'shish' },
+    { command: 'del_channel', description: '➖ Kanal o\'chirish' },
   ];
 
   try {
